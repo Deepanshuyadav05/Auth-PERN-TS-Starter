@@ -14,3 +14,5 @@ class ApiResponseClass{
         return res.status(204).end();
     }
 }
+
+export default ApiResponseClass;
