@@ -28,6 +28,10 @@ class ApiErrorClass extends Error {
     static conflict(message = "Conflict"): ApiErrorClass {
         return new ApiErrorClass(409, message);
     }
+
+    static internalServerError(message = "Internal Server Error"): ApiErrorClass {
+        return new ApiErrorClass(500, message);
+    }
 }
 
 export default ApiErrorClass;

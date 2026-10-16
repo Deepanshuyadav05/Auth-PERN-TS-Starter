@@ -2,7 +2,7 @@ import type {Request, Response, NextFunction} from "express";
 import type {ZodType} from "zod";
 import ApiErrorClass from "../utils/api-error-class.js";
 
-const zodValidationMiddleware = (schema : ZodType) => {
+export const zodValidationMiddleware = (schema : ZodType) => {
     return (req : Request, _res : Response, next : NextFunction) => {
         const result = schema.safeParse(req.body);
 
