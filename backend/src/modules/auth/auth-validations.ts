@@ -27,4 +27,9 @@ export const loginSchema = z.object({
     password: passwordSchema,
 })
 
+export const tokenSchema = z.object({
+    token :  z.string({ error: "Token is required" }).length(64, "Invalid verification token")
+})
+
+
 export type LoginSchemaType = z.infer<typeof loginSchema>

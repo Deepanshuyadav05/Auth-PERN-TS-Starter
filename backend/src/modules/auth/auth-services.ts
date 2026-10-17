@@ -1,11 +1,12 @@
 import type {SignupSchemaType} from "./auth-validations.js";
 import {userTable, userTokenTable} from "../../db/schema.js";
 import {db} from "../../db/index.js";
-import {eq} from "drizzle-orm";
+import {and, eq} from "drizzle-orm";
 import ApiErrorClass from "../../utils/api-error-class.js";
 import {generateToken, hashPassword, hashToken} from "./auth-utils.js"
 import {sendVerificationEmail} from "./auth-emails.js";
 
+//signup
 export const SignupService = async({ name, email, password }:SignupSchemaType) => {
     const user = await db.select().from(userTable).where(eq(userTable.email, email)).limit(1)
     if (user.length > 0) throw ApiErrorClass.conflict("User already exists");
@@ -42,4 +43,30 @@ export const SignupService = async({ name, email, password }:SignupSchemaType) =
 
     return safeUserData;
 
+}
+
+//email-verify
+export const EmailVerificationService = async(token:string) => {
+    const verifyTokenHash:string = hashToken(token)
+
+    // it takes the first element of the array and puts it in tokenRow
+    const [tokenRow] = await db.select().from(userTokenTable).where(and(eq(userTokenTable.tokenHash, verifyTokenHash), eq(userTokenTable.type, "email_verification"))).limit(1)
+
+    if(!tokenRow || tokenRow.expiresAt < new Date()){
+        //if we have token, but we are still in this if block then the token is expired and we can clear the tokenRow for cleanup
+        if (tokenRow) await db.delete(userTokenTable).where(eq(userTokenTable.id, tokenRow.id))
+        throw ApiErrorClass.badRequest("Invalid or expired verification link")
+    }
+
+    const updatedUser = await db.transaction(async (tx) => {
+        const [user] = await tx.update(userTable).set({isEmailVerified: true}).where(eq(userTable.id, tokenRow.userId)).returning()
+        //if we have verified the email then we can clean up the tokenRow
+        await tx.delete(userTokenTable).where(eq(userTokenTable.id, tokenRow.id))
+
+        return user;
+    })
+
+    if(!updatedUser) throw ApiErrorClass.notFound("User not found");
+    const { passwordHash: _, ...safeUserData } = updatedUser;
+    return safeUserData;
 }

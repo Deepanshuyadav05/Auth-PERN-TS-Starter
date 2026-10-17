@@ -6,3 +6,10 @@ export const signupController = async (req: Request, res: Response) => {
     const response = await auth_Service.SignupService(req.body)
     return ApiResponseClass.created(res, "User created successfully", response)
 }
+
+//email verification controller
+export const emailVerifyController = async (req: Request, res: Response) => {
+
+    const response = await auth_Service.EmailVerificationService(req.body.token)
+    return ApiResponseClass.ok(res, "Email verified successfully", response)
+}
