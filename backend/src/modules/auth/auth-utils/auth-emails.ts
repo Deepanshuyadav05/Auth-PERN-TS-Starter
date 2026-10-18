@@ -1,4 +1,4 @@
-import { sendEmail } from "../../utils/send-email.js";
+import { sendEmail } from "../../../utils/send-email.js";
 
 const escapeHtml = (s: string) =>
     s.replace(/&/g, "&amp;")

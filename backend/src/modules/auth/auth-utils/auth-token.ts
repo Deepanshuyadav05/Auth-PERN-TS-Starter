@@ -1,12 +1,6 @@
-import bcrypt from "bcryptjs";
+// random token for email verification, password reset and refresh
 import {createHash, randomBytes} from "node:crypto";
 
-// bcrypt: for passwords only
-export async function hashPassword(password: string) {
-    return bcrypt.hash(password, 12);
-}
-
-// random token for email verification, password reset and refresh
 export function generateToken(bytes = 32) {
     return randomBytes(bytes).toString("hex");
 }

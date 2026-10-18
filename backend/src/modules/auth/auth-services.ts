@@ -1,10 +1,12 @@
-import type {SignupSchemaType} from "./auth-validations.js";
-import {userTable, userTokenTable} from "../../db/schema.js";
+import type {LoginSchemaType, SignupSchemaType} from "./auth-validations.js";
+import {refreshTokenTable, userTable, userTokenTable} from "../../db/schema.js";
 import {db} from "../../db/index.js";
 import {and, eq} from "drizzle-orm";
 import ApiErrorClass from "../../utils/api-error-class.js";
-import {generateToken, hashPassword, hashToken} from "./auth-utils.js"
-import {sendVerificationEmail} from "./auth-emails.js";
+import {generateToken, hashToken} from "./auth-utils/auth-token.js"
+import {comparePassword, DUMMY_HASH, hashPassword} from "./auth-utils/auth-bcrypt.js"
+import {sendVerificationEmail} from "./auth-utils/auth-emails.js";
+import {generateAccessToken, generateRefreshToken} from "./auth-utils/auth-jwt.js";
 
 //signup
 export const SignupService = async({ name, email, password }:SignupSchemaType) => {
@@ -69,4 +71,37 @@ export const EmailVerificationService = async(token:string) => {
     if(!updatedUser) throw ApiErrorClass.notFound("User not found");
     const { passwordHash: _, ...safeUserData } = updatedUser;
     return safeUserData;
+}
+
+//Login
+export const loginService = async({email, password}:LoginSchemaType) => {
+    const [user] = await db.select().from(userTable).where(eq(userTable.email, email)).limit(1)
+
+    if(!user) {
+        await comparePassword(password, DUMMY_HASH)
+        throw ApiErrorClass.unauthorized("Invalid credentials");
+    }
+
+    const isMatch = await comparePassword(password, user.passwordHash)
+    if(!isMatch) throw ApiErrorClass.unauthorized("Invalid credentials");
+
+    const isVerified = user.isEmailVerified
+    if(!isVerified) throw ApiErrorClass.forbidden("Email not verified. Please verify your email before logging in.");
+
+    const accessToken = generateAccessToken(user.id)
+    const refreshToken = generateRefreshToken(user.id)
+    const hashedRefreshToken = hashToken(refreshToken)
+
+    await db.insert(refreshTokenTable).values({
+        userId: user.id,
+        tokenHash: hashedRefreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    })
+
+    const { passwordHash: _, ...safeUserData } = user
+
+    return {user : safeUserData, accessToken, refreshToken};
+
+
+
 }
