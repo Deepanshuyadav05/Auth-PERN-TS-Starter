@@ -2,6 +2,7 @@ import * as auth_Service from "./auth-services.js"
 import type {Request, Response} from "express";
 import ApiResponseClass from "../../utils/api-response-class.js";
 import {setRefreshTokenCookie} from "./auth-utils/auth-cookie-config.js";
+import ApiErrorClass from "../../utils/api-error-class.js";
 
 export const signupController = async (req: Request, res: Response) => {
     const response = await auth_Service.SignupService(req.body)
@@ -22,4 +23,14 @@ export const loginController = async (req: Request, res: Response) => {
     setRefreshTokenCookie(res, refreshToken)
 
     return ApiResponseClass.ok(res, "User login successfully", data)
+}
+
+//refresh token controller
+export const refreshTokenController = async (req: Request, res: Response) => {
+    const token = req.cookies?.REFRESH_TOKEN_COOKIE
+    if (!token) throw ApiErrorClass.unauthorized("Refresh token missing")
+    const response = await auth_Service.refreshToken(token)
+
+    setRefreshTokenCookie(res, response.newRefreshToken)
+    return ApiResponseClass.ok(res, "User refresh token successfully renewed", {accessToken: response.newAccessToken})
 }

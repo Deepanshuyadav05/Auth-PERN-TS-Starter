@@ -1,4 +1,4 @@
-// random token for email verification, password reset and refresh
+// random token for email verification and password reset
 import {createHash, randomBytes} from "node:crypto";
 
 export function generateToken(bytes = 32) {

@@ -8,5 +8,6 @@ const route = Router()
 route.post('/signup', zodValidationMiddleware(signupSchema) ,auth_controller.signupController);
 route.post('/verify-email', zodValidationMiddleware(tokenSchema), auth_controller.emailVerifyController);
 route.post('/login', zodValidationMiddleware(loginSchema) ,auth_controller.loginController);
+route.post('/refresh', auth_controller.refreshTokenController);
 
 export default route;

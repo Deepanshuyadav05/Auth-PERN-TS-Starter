@@ -1,7 +1,7 @@
 import type {LoginSchemaType, SignupSchemaType} from "./auth-validations.js";
 import {refreshTokenTable, userTable, userTokenTable} from "../../db/schema.js";
 import {db} from "../../db/index.js";
-import {and, eq} from "drizzle-orm";
+import {and, eq, isNull} from "drizzle-orm";
 import ApiErrorClass from "../../utils/api-error-class.js";
 import {generateToken, hashToken} from "./auth-utils/auth-token.js"
 import {comparePassword, DUMMY_HASH, hashPassword} from "./auth-utils/auth-bcrypt.js"
@@ -104,4 +104,34 @@ export const loginService = async({email, password}:LoginSchemaType) => {
 
 
 
+}
+
+//refreshToken
+export const refreshToken = async(token:string) => {
+    const hashedRefreshToken = hashToken(token)
+    const [refreshTokenRow] = await db.select().from(refreshTokenTable).where(eq(refreshTokenTable.tokenHash, hashedRefreshToken)).limit(1)
+
+    if(!refreshTokenRow) throw ApiErrorClass.unauthorized("Invalid or expired token");
+
+    // token was real but already used -> someone else has a copy, kill all sessions of this user
+    if(refreshTokenRow.revokedAt){
+        await db.update(refreshTokenTable).set({revokedAt: new Date()}).where(and(eq(refreshTokenTable.userId, refreshTokenRow.userId), isNull(refreshTokenTable.revokedAt)))
+        throw ApiErrorClass.unauthorized("Token reuse detected. Please login again.");
+    }
+
+    if(refreshTokenRow.expiresAt < new Date()) throw ApiErrorClass.unauthorized("Invalid or expired token");
+
+    const newRefreshToken = generateRefreshToken(refreshTokenRow.userId)
+    const newAccessToken = generateAccessToken(refreshTokenRow.userId)
+
+    await db.transaction(async (tx) => {
+        await tx.update(refreshTokenTable).set({revokedAt: new Date()}).where(eq(refreshTokenTable.id, refreshTokenRow.id))
+        await tx.insert(refreshTokenTable).values({
+            userId: refreshTokenRow.userId,
+            tokenHash: hashToken(newRefreshToken),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        })
+    })
+
+    return {newAccessToken, newRefreshToken}
 }
