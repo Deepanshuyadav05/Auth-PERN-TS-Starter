@@ -1,5 +1,6 @@
 import { sendEmail } from "../../../utils/send-email.js";
 
+//explanation why we use escape html is in obsidian notes
 const escapeHtml = (s: string) =>
     s.replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
