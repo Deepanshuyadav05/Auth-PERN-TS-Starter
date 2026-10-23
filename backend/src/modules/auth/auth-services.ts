@@ -107,7 +107,7 @@ export const loginService = async({email, password}:LoginSchemaType) => {
 }
 
 //refreshToken
-export const refreshToken = async(token:string) => {
+export const refreshTokenService = async(token:string) => {
     const hashedRefreshToken = hashToken(token)
     const [refreshTokenRow] = await db.select().from(refreshTokenTable).where(eq(refreshTokenTable.tokenHash, hashedRefreshToken)).limit(1)
 
