@@ -35,3 +35,11 @@ export const refreshTokenController = async (req: Request, res: Response) => {
     setRefreshTokenCookie(res, response.newRefreshToken)
     return ApiResponseClass.ok(res, "User refresh token successfully renewed", {accessToken: response.newAccessToken})
 }
+
+//get-me controller
+export const getMeController = async (req: Request, res: Response) => {
+    if(!req.userId) throw ApiErrorClass.unauthorized()
+    const response = await auth_Service.getMeService(req.userId)
+    return ApiResponseClass.ok(res, "User fetched successfully ", response)
+
+}

@@ -14,7 +14,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
 
     try {
         const payload = verifyAccessToken(token)
-        //type checking because verifyAccessToken return a jwtPayload only but payload can be a sting too
+        //type checking because verifyAccessToken return a jwtPayload or string but to read userId it should be jwtPayload only
         if (typeof payload === "string" || typeof payload.userId !== "string") throw ApiErrorClass.unauthorized("Invalid token")
         req.userId = payload.userId
     }

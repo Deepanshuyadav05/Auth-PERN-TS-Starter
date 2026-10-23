@@ -135,3 +135,11 @@ export const refreshTokenService = async(token:string) => {
 
     return {newAccessToken, newRefreshToken}
 }
+
+//get-me
+export const getMeService = async(userId:string) => {
+    const [user] = await db.select().from(userTable).where(eq(userTable.id, userId)).limit(1)
+    if(!user) throw ApiErrorClass.notFound("User not found");
+    const { passwordHash: _, ...safeUserData } = user
+    return safeUserData;
+}
