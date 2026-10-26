@@ -1,7 +1,7 @@
-import * as auth_Service from "./auth-services.js"
+import * as auth_Service from "./auth-services.js";
 import type {Request, Response} from "express";
 import ApiResponseClass from "../../utils/api-response-class.js";
-import {setRefreshTokenCookie} from "./auth-utils/auth-cookie-config.js";
+import {clearRefreshTokenCookie, setRefreshTokenCookie} from "./auth-utils/auth-cookie-config.js";
 import ApiErrorClass from "../../utils/api-error-class.js";
 import {refreshTokenService} from "./auth-services.js";
 
@@ -41,5 +41,15 @@ export const getMeController = async (req: Request, res: Response) => {
     if(!req.userId) throw ApiErrorClass.unauthorized()
     const response = await auth_Service.getMeService(req.userId)
     return ApiResponseClass.ok(res, "User fetched successfully ", response)
+}
+
+export const logoutController = async (req: Request, res: Response) => {
+    const token = req.cookies?.REFRESH_TOKEN_COOKIE
+    if (!token) throw ApiErrorClass.unauthorized("Refresh token missing")
+
+    await auth_Service.logoutService(token)
+    clearRefreshTokenCookie(res)
+
+    return ApiResponseClass.ok(res, "Logged out successfully")
 
 }

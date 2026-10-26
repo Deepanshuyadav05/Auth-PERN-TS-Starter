@@ -22,6 +22,4 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
         throw ApiErrorClass.unauthorized("Invalid or expired token")
     }
     next()
-
-
 }

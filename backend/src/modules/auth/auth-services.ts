@@ -143,3 +143,12 @@ export const getMeService = async(userId:string) => {
     const { passwordHash: _, ...safeUserData } = user
     return safeUserData;
 }
+
+//logout
+export const logoutService = async(token:string) => {
+    const tokenHash = hashToken(token);
+
+    //  token that's already revoked keeps its original timestamp
+    await db.update(refreshTokenTable).set({revokedAt: new Date()}).where(and(eq(refreshTokenTable.tokenHash, tokenHash), isNull(refreshTokenTable.revokedAt)))
+
+}
