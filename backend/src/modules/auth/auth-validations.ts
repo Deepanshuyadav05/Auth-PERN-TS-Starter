@@ -10,6 +10,8 @@ const passwordSchema = z.string({ error: "Password is required" })
     .min(8, "Password must be at least 8 characters")
     .max(68, "Password must be at most 68 characters")
 
+const tokenField = z.string({ error: "Token is required" }).length(64, "Invalid token")
+
 
 export const signupSchema = z.object({
     name: z.string({ error: "Name is required" })
@@ -27,9 +29,19 @@ export const loginSchema = z.object({
     password: passwordSchema,
 })
 
+export type LoginSchemaType = z.infer<typeof loginSchema>
+
+
 export const tokenSchema = z.object({
-    token :  z.string({ error: "Token is required" }).length(64, "Invalid verification token")
+    token :  tokenField
+})
+
+export const forgotPasswordSchema = z.object({
+    email: emailSchema,
 })
 
 
-export type LoginSchemaType = z.infer<typeof loginSchema>
+export const resetPasswordSchema = z.object({
+    token: tokenField,
+    newPassword: passwordSchema,
+})

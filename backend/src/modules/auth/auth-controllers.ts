@@ -43,6 +43,7 @@ export const getMeController = async (req: Request, res: Response) => {
     return ApiResponseClass.ok(res, "User fetched successfully ", response)
 }
 
+//logout controller
 export const logoutController = async (req: Request, res: Response) => {
     const token = req.cookies?.REFRESH_TOKEN_COOKIE
     if (!token) throw ApiErrorClass.unauthorized("Refresh token missing")
@@ -52,4 +53,18 @@ export const logoutController = async (req: Request, res: Response) => {
 
     return ApiResponseClass.ok(res, "Logged out successfully")
 
+}
+
+//forgot password controller
+export const forgotPasswordController = async (req: Request, res: Response) => {
+    await auth_Service.forgotPasswordService(req.body.email)
+    return ApiResponseClass.ok(res, "If an account with that email exists, a reset link has been sent")
+}
+
+export const resetPasswordController = async (req: Request, res: Response) => {
+    //the token is in body because the link points to the frontend page and frontend will extract the token from the url
+    await auth_Service.resetPasswordService(req.body.token, req.body.newPassword)
+    //we clear the cookie because the service revokes all the sessions
+    clearRefreshTokenCookie(res)
+    return ApiResponseClass.ok(res, "Password reset successfully. Please login again")
 }

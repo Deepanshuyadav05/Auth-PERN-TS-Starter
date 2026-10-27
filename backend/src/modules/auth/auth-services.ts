@@ -5,7 +5,7 @@ import {and, eq, isNull} from "drizzle-orm";
 import ApiErrorClass from "../../utils/api-error-class.js";
 import {generateToken, hashToken} from "./auth-utils/auth-token.js"
 import {comparePassword, DUMMY_HASH, hashPassword} from "./auth-utils/auth-bcrypt.js"
-import {sendVerificationEmail} from "./auth-utils/auth-emails.js";
+import {sendResetPasswordEmail, sendVerificationEmail} from "./auth-utils/auth-emails.js";
 import {generateAccessToken, generateRefreshToken} from "./auth-utils/auth-jwt.js";
 
 //signup
@@ -152,3 +152,55 @@ export const logoutService = async(token:string) => {
     await db.update(refreshTokenTable).set({revokedAt: new Date()}).where(and(eq(refreshTokenTable.tokenHash, tokenHash), isNull(refreshTokenTable.revokedAt)))
 
 }
+
+//forgot-password
+export const forgotPasswordService = async (email:string) => {
+    const [user] = await db.select().from(userTable).where(eq(userTable.email, email)).limit(1)
+    if(!user) return // don't reveal whether the email exists let the controller send generic message
+
+    const resetToken = generateToken();
+
+    await db.transaction(async (tx) => {
+        // remove any older reset tokens so only the newest link works
+        await tx.delete(userTokenTable).where(and(eq(userTokenTable.userId, user.id), eq(userTokenTable.type, "password_reset")))
+        await tx.insert(userTokenTable).values({
+            userId: user.id,
+            type: "password_reset",
+            tokenHash: hashToken(resetToken),
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000) //15min
+        })
+    })
+
+    try {
+        await sendResetPasswordEmail(user.email, user.name, resetToken)
+    } catch (err) {
+        console.error("Reset password email failed:", err)
+    }
+}
+
+//reset password
+export const resetPasswordService = async(token:string, newPassword:string) => {
+    const hashedToken = hashToken(token)
+    const [tokenRow] = await db.select().from(userTokenTable)
+        .where(and(eq(userTokenTable.tokenHash, hashedToken), eq(userTokenTable.type, "password_reset")))
+        .limit(1)
+
+    if(!tokenRow || tokenRow.expiresAt < new Date()){
+        // expired token -> clean it up
+        if (tokenRow) await db.delete(userTokenTable).where(eq(userTokenTable.id, tokenRow.id))
+        throw ApiErrorClass.badRequest("Invalid or expired reset link")
+    }
+
+    const passwordHash = await hashPassword(newPassword)
+
+    await db.transaction(async (tx) => {
+        await tx.update(userTable).set({ passwordHash }).where(eq(userTable.id, tokenRow.userId))
+        // token is single-use
+        await tx.delete(userTokenTable).where(eq(userTokenTable.id, tokenRow.id))
+        // log out every session, in case the account was compromised
+        await tx.update(refreshTokenTable).set({ revokedAt: new Date() })
+            .where(and(eq(refreshTokenTable.userId, tokenRow.userId), isNull(refreshTokenTable.revokedAt)))
+    })
+
+}
+

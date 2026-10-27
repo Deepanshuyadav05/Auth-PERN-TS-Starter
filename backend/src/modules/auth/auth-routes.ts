@@ -1,6 +1,6 @@
 import {Router} from "express";
 import zodValidationMiddleware from "../../middlewares/zod-validation-middleware.js";
-import {loginSchema, signupSchema, tokenSchema} from "./auth-validations.js";
+import {forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema, tokenSchema} from "./auth-validations.js";
 import * as auth_controller from "./auth-controllers.js";
 import {requireAuth} from "./auth-middlewares.js";
 
@@ -12,5 +12,7 @@ route.post('/login', zodValidationMiddleware(loginSchema) ,auth_controller.login
 route.post('/refresh', auth_controller.refreshTokenController);
 route.get('/me', requireAuth, auth_controller.getMeController);
 route.post('/logout', auth_controller.logoutController);
+route.post('/forgot-password', zodValidationMiddleware(forgotPasswordSchema) ,auth_controller.forgotPasswordController);
+route.post('/reset-password', zodValidationMiddleware(resetPasswordSchema), auth_controller.resetPasswordController);
 
 export default route;

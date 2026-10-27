@@ -12,7 +12,7 @@ export async function sendVerificationEmail(to: string, name: string, token: str
 
     const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
     const from:string = 'verify@mail.iamdeepanshu.dev'
-    // 2. build the html string (a greeting with the name + an <a href> with the link)
+    //build the html string (a greeting with the name + an <a href> with the link)
 
     const htmlSnippit = `<html>
     <head>
@@ -31,6 +31,33 @@ export async function sendVerificationEmail(to: string, name: string, token: str
     </body>
     </html>`
 
-    // 3. call sendEmail({ to, subject: "...", html })
+    //call sendEmail({ to, subject: "...", html })
     await sendEmail({from, to, subject:"Email verification", html:htmlSnippit })
+}
+
+export async function sendResetPasswordEmail(to: string, name: string, token: string) {
+
+    const resetPasswordLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+    const from:string = 'noreply@mail.iamdeepanshu.dev'
+    //build the html string (a greeting with the name + an <a href> with the link)
+
+    const htmlSnippit = `<html>
+    <head>
+    
+    </head>
+    <body>
+        <div class="container">
+            <h2>Password reset mail</h2>
+            <p>Hello ${escapeHtml(name)}</p>
+            <p>
+                Reset your password by clicking the link below
+                here is the link: <a href="${resetPasswordLink}" target="_blank" >Click here</a>
+            </p>
+            
+        </div>
+    </body>
+    </html>`
+
+    //call sendEmail({ to, subject: "...", html })
+    await sendEmail({from, to, subject:"Password reset", html:htmlSnippit })
 }
