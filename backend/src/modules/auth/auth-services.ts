@@ -204,3 +204,31 @@ export const resetPasswordService = async(token:string, newPassword:string) => {
 
 }
 
+//resend email verification
+export const resendEmailVerifyService = async (email:string) => {
+    const [user] = await db.select().from(userTable).where(eq(userTable.email, email)).limit(1)
+    //we don't want to reveal that the user with this email exists or not to make it safe from hacker
+    if(!user || user.isEmailVerified) return
+
+    const verificationToken = generateToken()
+    const expiresAtTime = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    await db.transaction(async (tx) => {
+        await tx.delete(userTokenTable).where(and(eq(userTokenTable.userId, user.id), eq(userTokenTable.type, "email_verification")))
+
+        await tx.insert(userTokenTable).values({
+            userId: user.id,
+            type: 'email_verification',
+            tokenHash: hashToken(verificationToken),
+            expiresAt: expiresAtTime
+        })
+    })
+
+
+    try {
+        await sendVerificationEmail(user.email, user.name, verificationToken)
+    } catch (err) {
+        console.error("Resend verification email failed:", err)
+    }
+
+}
+

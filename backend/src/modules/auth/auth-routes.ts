@@ -14,5 +14,6 @@ route.get('/me', requireAuth, auth_controller.getMeController);
 route.post('/logout', auth_controller.logoutController);
 route.post('/forgot-password', zodValidationMiddleware(forgotPasswordSchema) ,auth_controller.forgotPasswordController);
 route.post('/reset-password', zodValidationMiddleware(resetPasswordSchema), auth_controller.resetPasswordController);
+route.post('/resend-verification', zodValidationMiddleware(forgotPasswordSchema), auth_controller.resendVerificationController)
 
 export default route;

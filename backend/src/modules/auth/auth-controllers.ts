@@ -3,7 +3,6 @@ import type {Request, Response} from "express";
 import ApiResponseClass from "../../utils/api-response-class.js";
 import {clearRefreshTokenCookie, setRefreshTokenCookie} from "./auth-utils/auth-cookie-config.js";
 import ApiErrorClass from "../../utils/api-error-class.js";
-import {refreshTokenService} from "./auth-services.js";
 
 export const signupController = async (req: Request, res: Response) => {
     const response = await auth_Service.SignupService(req.body)
@@ -61,10 +60,17 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
     return ApiResponseClass.ok(res, "If an account with that email exists, a reset link has been sent")
 }
 
+//reset password controller
 export const resetPasswordController = async (req: Request, res: Response) => {
     //the token is in body because the link points to the frontend page and frontend will extract the token from the url
     await auth_Service.resetPasswordService(req.body.token, req.body.newPassword)
     //we clear the cookie because the service revokes all the sessions
     clearRefreshTokenCookie(res)
     return ApiResponseClass.ok(res, "Password reset successfully. Please login again")
+}
+
+//resend email verify controller
+export const resendVerificationController = async (req: Request, res: Response) => {
+    await auth_Service.resendEmailVerifyService(req.body.email)
+    return ApiResponseClass.ok(res, "If an account with that email exists, a verification link has been sent")
 }
