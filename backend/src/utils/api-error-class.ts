@@ -32,6 +32,10 @@ class ApiErrorClass extends Error {
     static internalServerError(message = "Internal Server Error"): ApiErrorClass {
         return new ApiErrorClass(500, message);
     }
+
+    static tooManyRequests(message = "Too many requests"): ApiErrorClass {
+        return new ApiErrorClass(429, message);
+    }
 }
 
 export default ApiErrorClass;
