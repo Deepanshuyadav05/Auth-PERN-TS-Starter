@@ -3,7 +3,7 @@ import type{Response, CookieOptions} from "express";
 const refreshTokenCookieOptions: CookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: "strict",
+    sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'strict',  // none requires secure: true, which you already set in production.
     // Your router is mounted at /api/auth, so path: "/api/auth" stops the refresh token from being sent with every other request
     //Path option restricts which URL paths on your website are allowed to receive and read the cookie.
     path: "/api/auth"
