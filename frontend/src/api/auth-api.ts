@@ -1,4 +1,4 @@
-import api from './client.ts'
+import {api} from './client.ts'
 
 export const loginUser = async (body: { email: string; password: string }) => {
     const res = await api.post("/auth/login", body);
@@ -14,11 +14,6 @@ export const verifyEmail = async (token: string) => {
     const res = await api.post("/auth/verify-email", {token});
     return res.data;
 }
-
-export const refreshToken = async () => {
-    const res = await api.post("/auth/refresh");
-    return res.data;
-};
 
 export const forgotPassword = async (email: string) => {
     const res = await api.post("/auth/forgot-password", {email});
