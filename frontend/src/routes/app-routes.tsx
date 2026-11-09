@@ -5,10 +5,11 @@ import Dashboard from "../pages/dashboard.tsx";
 import VerifyEmail from "../pages/verify-email.tsx";
 import ResetPassword from "../pages/reset-password.tsx";
 import ForgotPassword from "../pages/forgot-password.tsx";
+import RootLayout from "../components/root-layout.tsx";
 
 const router = createBrowserRouter(
     createRoutesFromElements(
-        <Route>
+        <Route element={<RootLayout/>}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<Login/>}  />
             <Route path="/signup" element={<Signup/>}  />
